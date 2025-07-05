@@ -14,28 +14,43 @@ CrossPay is a multi-chain USDC payment system that allows customers to pay from 
 
 ---
 
-## 📋 Contract Addresses (Base Sepolia Testnet)
+## 📋 Contract Addresses (All Testnets)
 
 ```javascript
 const CROSSPAY_CONTRACTS = {
-  // Main payment contract
-  MultiSourcePaymentReceiver: "0x3CAf30956E604f9Cf7093ccb0474501C624dA874",
+  // Ethereum Sepolia
+  11155111: {
+    MultiSourcePaymentReceiver: "0x0E19C68fb128B32524FD3694D3b6dc7e8a3fb8B0",
+    CrossPayPaymaster: "0x912fea839EB154115CbA1EfF581585d8b1b923ab",
+    PaymentReceiptNFT: "0x3CAf30956E604f9Cf7093ccb0474501C624dA874",
+    USDC: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    domain: 0,
+    rpcUrl: "https://sepolia.infura.io/v3/YOUR_KEY"
+  },
   
-  // Gas sponsorship (ERC-4337)
-  CrossPayPaymaster: "0xb6314ed82102BC854aC9c3245ad7D6Cbf56d3Ad3",
+  // Base Sepolia (Primary)
+  84532: {
+    MultiSourcePaymentReceiver: "0x3CAf30956E604f9Cf7093ccb0474501C624dA874",
+    CrossPayPaymaster: "0xb6314ed82102BC854aC9c3245ad7D6Cbf56d3Ad3",
+    PaymentReceiptNFT: "0x96dB6Fc76F34Ec465B86241E610C33a302E64fd3",
+    USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    domain: 6,
+    rpcUrl: "https://sepolia.base.org"
+  },
   
-  // NFT receipts (optional)
-  PaymentReceiptNFT: "0x96dB6Fc76F34Ec465B86241E610C33a302E64fd3",
-  
-  // USDC token
-  USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+  // Arbitrum Sepolia
+  421614: {
+    MultiSourcePaymentReceiver: "0x72e5FC1fd59cF7cA53FED9931CB19e31a51980E3",
+    CrossPayPaymaster: "0xCa152591c4398996F883bb731e21eBF800D6b403",
+    PaymentReceiptNFT: "0x6f1d6a211c01A6df9f73D54a615cDb18Cb8e3004",
+    USDC: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+    domain: 3,
+    rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc"
+  }
 };
 
-const CHAIN_CONFIG = {
-  chainId: 84532,        // Base Sepolia
-  domain: 6,             // Circle CCTP domain
-  rpcUrl: "https://sepolia.base.org"
-};
+// Helper function to get config for current chain
+const getChainConfig = (chainId) => CROSSPAY_CONTRACTS[chainId];
 ```
 
 ---
@@ -74,15 +89,18 @@ const USDC_ABI = [
 ### 3. **Connect to Contracts**
 
 ```javascript
-// Setup provider and contracts
-const provider = new ethers.JsonRpcProvider(CHAIN_CONFIG.rpcUrl);
+// Setup provider and contracts for specific chain
+const chainId = 84532; // Base Sepolia - or get from user's wallet
+const config = getChainConfig(chainId);
+
+const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 const paymentContract = new ethers.Contract(
-  CROSSPAY_CONTRACTS.MultiSourcePaymentReceiver, 
+  config.MultiSourcePaymentReceiver, 
   MULTISOURCE_ABI, 
   provider
 );
 const usdcContract = new ethers.Contract(
-  CROSSPAY_CONTRACTS.USDC, 
+  config.USDC, 
   USDC_ABI, 
   provider
 );
@@ -102,13 +120,16 @@ async function createPaymentOrder(merchantAddress, amountInUSDC, signer) {
   // Convert USDC amount (6 decimals)
   const amount = ethers.parseUnits(amountInUSDC.toString(), 6);
   
-  // Create order on destination chain (Base Sepolia)
-  const contract = paymentContract.connect(signer);
+  // Create order on destination chain
+  const destinationChainId = 84532; // Base Sepolia as destination
+  const config = getChainConfig(destinationChainId);
+  const contract = new ethers.Contract(config.MultiSourcePaymentReceiver, MULTISOURCE_ABI, signer);
+  
   const tx = await contract.createOrder(
     orderId,
     merchantAddress,
     amount,
-    CHAIN_CONFIG.chainId  // Base Sepolia
+    destinationChainId
   );
   
   const receipt = await tx.wait();
