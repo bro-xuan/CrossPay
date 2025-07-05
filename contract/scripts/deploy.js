@@ -25,43 +25,6 @@ const CCTP_ADDRESSES = {
   }
 };
 
-// CREATE2 Factory address (same on all chains)
-const CREATE2_FACTORY = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
-
-async function deployWithCreate2(contractName, constructorTypes, constructorArgs, salt) {
-  const Contract = await ethers.getContractFactory(contractName);
-  const bytecode = Contract.bytecode;
-  const encodedArgs = ethers.AbiCoder.defaultAbiCoder().encode(constructorTypes, constructorArgs);
-  const initCode = bytecode + encodedArgs.slice(2);
-  
-  // Calculate CREATE2 address
-  const initCodeHash = ethers.keccak256(initCode);
-  const create2Address = ethers.getCreate2Address(CREATE2_FACTORY, salt, initCodeHash);
-  
-  console.log(`Predicted ${contractName} address:`, create2Address);
-  
-  // Check if contract already exists at CREATE2 address
-  const existingCode = await ethers.provider.getCode(create2Address);
-  if (existingCode !== "0x") {
-    console.log(`${contractName} already deployed at:`, create2Address);
-    return create2Address;
-  }
-  
-  // Deploy using CREATE2
-  const [signer] = await ethers.getSigners();
-  const factory = new ethers.Contract(CREATE2_FACTORY, [
-    "function deploy(bytes memory bytecode, bytes32 salt) public returns (address)"
-  ], signer);
-  
-  const tx = await factory.deploy(initCode, salt);
-  const receipt = await tx.wait();
-  
-  console.log(`${contractName} deployed to:`, create2Address);
-  console.log("Transaction hash:", receipt.transactionHash);
-  
-  return create2Address;
-}
-
 async function main() {
   const [deployer] = await ethers.getSigners();
   const chainId = await deployer.provider.getNetwork().then(network => network.chainId);
@@ -83,20 +46,21 @@ async function main() {
   
   // Get deployment parameters
   const protocolFeeRecipient = process.env.PROTOCOL_FEE_RECIPIENT || deployer.address;
-  const salt = process.env.DEPLOYMENT_SALT || ethers.id("CrossPayV1");
   
   console.log("\nDeployment Parameters:");
   console.log("Protocol Fee Recipient:", protocolFeeRecipient);
-  console.log("Salt:", salt);
   
-  // Deploy MultiSourcePaymentReceiver with CREATE2
+  // Deploy MultiSourcePaymentReceiver (regular deployment)
   console.log("\nDeploying MultiSourcePaymentReceiver...");
-  const multiSourcePaymentReceiverAddress = await deployWithCreate2(
-    "MultiSourcePaymentReceiver",
-    ["address", "address", "address"],
-    [cctpConfig.messageTransmitterV2, cctpConfig.usdc, protocolFeeRecipient],
-    salt
+  const MultiSourcePaymentReceiver = await ethers.getContractFactory("MultiSourcePaymentReceiver");
+  const multiSourcePaymentReceiver = await MultiSourcePaymentReceiver.deploy(
+    cctpConfig.messageTransmitterV2,
+    cctpConfig.usdc,
+    protocolFeeRecipient
   );
+  await multiSourcePaymentReceiver.waitForDeployment();
+  const multiSourcePaymentReceiverAddress = await multiSourcePaymentReceiver.getAddress();
+  console.log("MultiSourcePaymentReceiver deployed to:", multiSourcePaymentReceiverAddress);
 
   // Deploy CrossPayPaymaster
   console.log("\nDeploying CrossPayPaymaster...");
@@ -109,7 +73,7 @@ async function main() {
   await crossPayPaymaster.waitForDeployment();
   console.log("CrossPayPaymaster deployed to:", await crossPayPaymaster.getAddress());
   
-  // Deploy PaymentReceiptNFT (optional, not using CREATE2 for NFT)
+  // Deploy PaymentReceiptNFT
   console.log("\nDeploying PaymentReceiptNFT...");
   const PaymentReceiptNFT = await ethers.getContractFactory("PaymentReceiptNFT");
   const paymentReceiptNFT = await PaymentReceiptNFT.deploy("CrossPay Receipt", "CPAY-RCPT");
@@ -142,8 +106,7 @@ async function main() {
         constructorArgs: [cctpConfig.entryPoint, cctpConfig.usdc, multiSourcePaymentReceiverAddress]
       }
     },
-    cctpConfig: cctpConfig,
-    salt: salt
+    cctpConfig: cctpConfig
   };
   
   const deploymentsDir = path.join(__dirname, "../deployments");
@@ -154,50 +117,6 @@ async function main() {
   const filename = path.join(deploymentsDir, `${hre.network.name}-${chainId}.json`);
   fs.writeFileSync(filename, JSON.stringify(deploymentInfo, null, 2));
   console.log(`\nDeployment info saved to ${filename}`);
-  
-  // Verify contracts on Etherscan V2 (if not on localhost)
-  if (hre.network.name !== "hardhat" && hre.network.name !== "localhost") {
-    console.log("\nWaiting for block confirmations before verification...");
-    await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
-    
-    console.log(`\nVerifying contracts on Etherscan V2 for chain ${chainId}...`);
-    
-    // Verify MultiSourcePaymentReceiver
-    try {
-      await hre.run("verify:verify", {
-        address: multiSourcePaymentReceiverAddress,
-        constructorArguments: [cctpConfig.messageTransmitterV2, cctpConfig.usdc, protocolFeeRecipient],
-        network: hre.network.name
-      });
-      console.log("✅ MultiSourcePaymentReceiver verified");
-    } catch (error) {
-      console.error("❌ Error verifying MultiSourcePaymentReceiver:", error.message);
-    }
-    
-    // Verify CrossPayPaymaster
-    try {
-      await hre.run("verify:verify", {
-        address: await crossPayPaymaster.getAddress(),
-        constructorArguments: [cctpConfig.entryPoint, cctpConfig.usdc, multiSourcePaymentReceiverAddress],
-        network: hre.network.name
-      });
-      console.log("✅ CrossPayPaymaster verified");
-    } catch (error) {
-      console.error("❌ Error verifying CrossPayPaymaster:", error.message);
-    }
-    
-    // Verify PaymentReceiptNFT
-    try {
-      await hre.run("verify:verify", {
-        address: await paymentReceiptNFT.getAddress(),
-        constructorArguments: ["CrossPay Receipt", "CPAY-RCPT"],
-        network: hre.network.name
-      });
-      console.log("✅ PaymentReceiptNFT verified");
-    } catch (error) {
-      console.error("❌ Error verifying PaymentReceiptNFT:", error.message);
-    }
-  }
   
   console.log("\n✅ Deployment complete!");
   console.log("\nContract addresses:");
