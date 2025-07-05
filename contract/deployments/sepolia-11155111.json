@@ -1,0 +1,38 @@
+{
+  "network": "sepolia",
+  "chainId": "11155111",
+  "deployer": "0x9324d936B9A0D3a4518ffA762fA9186d88073be9",
+  "timestamp": "2025-07-05T12:11:01.540Z",
+  "contracts": {
+    "MultiSourcePaymentReceiver": {
+      "address": "0x0E19C68fb128B32524FD3694D3b6dc7e8a3fb8B0",
+      "constructorArgs": [
+        "0x7865fAfC2db2093669d92c0F33AeEF291086BEFD",
+        "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "0x9324d936B9A0D3a4518ffA762fA9186d88073be9"
+      ]
+    },
+    "PaymentReceiptNFT": {
+      "address": "0x3CAf30956E604f9Cf7093ccb0474501C624dA874",
+      "constructorArgs": [
+        "CrossPay Receipt",
+        "CPAY-RCPT"
+      ]
+    },
+    "CrossPayPaymaster": {
+      "address": "0x912fea839EB154115CbA1EfF581585d8b1b923ab",
+      "constructorArgs": [
+        "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+        "0x0E19C68fb128B32524FD3694D3b6dc7e8a3fb8B0"
+      ]
+    }
+  },
+  "cctpConfig": {
+    "messageTransmitterV2": "0x7865fAfC2db2093669d92c0F33AeEF291086BEFD",
+    "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "domain": 0,
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+  },
+  "salt": "0x0000000000000000000000000000000000000000000000000000000000000001"
+}
