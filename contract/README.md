@@ -10,9 +10,9 @@ CrossPay enables merchants to accept USDC payments from multiple wallets across 
 
 - **Multi-source payments**: Aggregate USDC from Base, Arbitrum, Ethereum
 - **Automatic fee splitting**: 95% to merchant, 5% protocol fee  
-- **Gas sponsorship**: Users pay in USDC only (ERC-4337 paymaster)
+- **Gas sponsorship**: Users pay no gas fees (ERC-4337 paymaster)
 - **Cross-chain support**: Circle CCTP V2 for seamless transfers
-- **NFT receipts**: Optional on-chain payment verification
+- **NFT receipts**: On-chain payment verification
 - **Privy integration**: Embedded wallets with social login
 
 ## 🚀 Quick Start
