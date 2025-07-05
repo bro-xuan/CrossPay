@@ -1,10 +1,10 @@
 # CrossPay Smart Contracts
 
-**Multi-chain USDC payment aggregation system using Circle CCTP V2 hooks**
+**Multi-chain USDC payment aggregation with Circle CCTP V2 and Privy gasless transactions**
 
 ## 🎯 Overview
 
-CrossPay enables merchants to accept USDC payments from multiple wallets across different chains, with automatic aggregation and fee splitting. Built for gasless user experience with Privy integration.
+CrossPay enables merchants to accept USDC payments from multiple wallets across different chains, with automatic aggregation and fee splitting. Built using Circle CCTP V2 for cross-chain transfers and Privy smart accounts for gasless user experience.
 
 ### Key Features
 
