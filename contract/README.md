@@ -230,9 +230,10 @@ CrossPay charges a **5% protocol fee** on all transactions:
 
 ## 🏆 Hackathon Focus
 
-Built for **Privy's Hackathon** targeting:
-- 🥇 **Best Consumer App** - Seamless UX with embedded wallets
-- 🥇 **Best Use of Stablecoins** - USDC-native payment experience
+Built for **ETHGlobal Cannes Hackathon** targeting:
+- 🥇 **Privy: Best Consumer App** - Seamless UX with embedded wallets
+- 🥇 **Privy: Best Use of Stablecoins** - USDC-native payment experience
+- 🥇 **Circle: Build a Multichain USDC Payment System**
 
 ## 🤝 Contributing
 
