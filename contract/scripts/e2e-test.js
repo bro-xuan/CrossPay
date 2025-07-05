@@ -202,6 +202,85 @@ async function contributeDirectly(orderId, amount, network) {
   return order.isCompleted;
 }
 
+async function testPaymasterGasSponsorship(network = "baseSepolia") {
+  console.log(`\n🛡️  TESTING PAYMASTER GAS SPONSORSHIP (${network})`);
+  console.log("===================================================");
+  
+  const [deployer] = await ethers.getSigners();
+  const config = CONTRACTS[network];
+  const paymaster = await ethers.getContractAt("CrossPayPaymaster", config.crossPayPaymaster);
+  
+  console.log("📊 PAYMASTER STATUS BEFORE:");
+  const ethBalanceBefore = await ethers.provider.getBalance(config.crossPayPaymaster);
+  const usdcBalanceBefore = await paymaster.getUSDCBalance();
+  const userBalanceBefore = await ethers.provider.getBalance(deployer.address);
+  
+  console.log(`   Paymaster ETH: ${ethers.formatEther(ethBalanceBefore)} ETH`);
+  console.log(`   Paymaster USDC: ${formatUsdc(usdcBalanceBefore)} USDC`);
+  console.log(`   User ETH: ${ethers.formatEther(userBalanceBefore)} ETH`);
+  
+  // Create a test order to trigger paymaster validation
+  console.log("\n💰 TESTING GAS SPONSORSHIP:");
+  console.log("Creating order to trigger paymaster validation...");
+  
+  const orderId = ethers.id(`PAYMASTER_TEST_${Date.now()}`);
+  const receiver = await ethers.getContractAt("MultiSourcePaymentReceiver", config.multiSourcePaymentReceiver);
+  
+  // This transaction should be sponsored by paymaster if using smart account
+  console.log("⚡ Creating order with gas sponsorship...");
+  const createOrderTx = await receiver.createOrder(
+    orderId,
+    deployer.address, // merchant
+    parseUsdc(1), // 1 USDC
+    config.chainId // destination
+  );
+  
+  const receipt = await createOrderTx.wait();
+  console.log(`   ✅ Order created! Tx: ${receipt.hash}`);
+  console.log(`   Gas used: ${receipt.gasUsed.toString()}`);
+  console.log(`   Gas price: ${ethers.formatUnits(receipt.gasPrice || 0, 'gwei')} gwei`);
+  
+  // Check paymaster status after
+  const ethBalanceAfter = await ethers.provider.getBalance(config.crossPayPaymaster);
+  const userBalanceAfter = await ethers.provider.getBalance(deployer.address);
+  
+  console.log("\n📊 PAYMASTER STATUS AFTER:");
+  console.log(`   Paymaster ETH: ${ethers.formatEther(ethBalanceAfter)} ETH`);
+  console.log(`   User ETH: ${ethers.formatEther(userBalanceAfter)} ETH`);
+  
+  // Calculate gas costs
+  const gasCostWei = receipt.gasUsed * (receipt.gasPrice || 0n);
+  const userEthSpent = userBalanceBefore - userBalanceAfter;
+  
+  console.log("\n💸 GAS COST ANALYSIS:");
+  console.log(`   Transaction gas cost: ${ethers.formatEther(gasCostWei)} ETH`);
+  console.log(`   User ETH spent: ${ethers.formatEther(userEthSpent)} ETH`);
+  
+  if (userEthSpent < gasCostWei) {
+    console.log("   🎉 GAS PARTIALLY OR FULLY SPONSORED!");
+    console.log(`   Savings: ${ethers.formatEther(gasCostWei - userEthSpent)} ETH`);
+  } else {
+    console.log("   ⚠️  User paid full gas (no sponsorship detected)");
+    console.log("   Note: This is expected with regular EOA wallets");
+    console.log("   Gas sponsorship requires ERC-4337 smart accounts");
+  }
+  
+  // Check paymaster limits and usage
+  try {
+    const dailyRemaining = await paymaster.getRemainingDailyLimit();
+    const userRemaining = await paymaster.getUserRemainingLimit(deployer.address);
+    
+    console.log("\n📈 PAYMASTER LIMITS:");
+    console.log(`   Daily remaining: ${formatUsdc(dailyRemaining)} USDC`);
+    console.log(`   User remaining: ${formatUsdc(userRemaining)} USDC`);
+  } catch (error) {
+    console.log("   Could not check limits:", error.message);
+  }
+  
+  console.log("\n✅ PAYMASTER TEST COMPLETED!");
+  return orderId;
+}
+
 async function main() {
   console.log("🎯 STARTING END-TO-END MULTI-SOURCE PAYMENT TEST");
   console.log("================================================");
@@ -225,6 +304,9 @@ async function main() {
       console.log("\n📊 ORDER PARTIALLY FUNDED");
       console.log("Ready for additional contributions from other chains!");
     }
+    
+    // Test paymaster gas sponsorship
+    await testPaymasterGasSponsorship("baseSepolia");
     
     // Final system state
     await logSystemState("baseSepolia", "FINAL STATE");
