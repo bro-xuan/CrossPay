@@ -1,0 +1,38 @@
+{
+  "network": "arbitrumSepolia",
+  "chainId": "421614",
+  "deployer": "0x9324d936B9A0D3a4518ffA762fA9186d88073be9",
+  "timestamp": "2025-07-05T12:21:41.412Z",
+  "contracts": {
+    "MultiSourcePaymentReceiver": {
+      "address": "0x72e5FC1fd59cF7cA53FED9931CB19e31a51980E3",
+      "constructorArgs": [
+        "0xaCF1ceeF35caAc005e15888dDb8A3515C41B4872",
+        "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+        "0x9324d936B9A0D3a4518ffA762fA9186d88073be9"
+      ]
+    },
+    "PaymentReceiptNFT": {
+      "address": "0x6f1d6a211c01A6df9f73D54a615cDb18Cb8e3004",
+      "constructorArgs": [
+        "CrossPay Receipt",
+        "CPAY-RCPT"
+      ]
+    },
+    "CrossPayPaymaster": {
+      "address": "0xCa152591c4398996F883bb731e21eBF800D6b403",
+      "constructorArgs": [
+        "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+        "0x72e5FC1fd59cF7cA53FED9931CB19e31a51980E3"
+      ]
+    }
+  },
+  "cctpConfig": {
+    "messageTransmitterV2": "0xaCF1ceeF35caAc005e15888dDb8A3515C41B4872",
+    "usdc": "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+    "domain": 3,
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789"
+  },
+  "salt": "0x0000000000000000000000000000000000000000000000000000000000000001"
+}

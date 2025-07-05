@@ -1,0 +1,40 @@
+{
+  "name": "crosspay-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for CrossPay multi-chain USDC payment system",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:multi": "hardhat test test/MultiSourcePaymentReceiver.test.js",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:arbitrum-sepolia": "hardhat run scripts/deploy.js --network arbitrumSepolia",
+    "deploy:all-testnets": "npm run deploy:sepolia && npm run deploy:base-sepolia && npm run deploy:arbitrum-sepolia",
+    "verify": "hardhat verify",
+    "verify:all": "node scripts/verify-all-chains.js",
+    "verify:hardhat": "node scripts/verify-all-chains.js hardhat",
+    "coverage": "hardhat coverage",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "format": "prettier --write 'contracts/**/*.sol' 'test/**/*.js' 'scripts/**/*.js'"
+  },
+  "keywords": ["solidity", "ethereum", "smart-contracts", "cctp", "usdc", "cross-chain"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "chai": "^4.3.7",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.14.0",
+    "hardhat": "^2.17.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "prettier": "^3.0.0",
+    "prettier-plugin-solidity": "^1.1.3",
+    "solhint": "^3.6.2",
+    "solidity-coverage": "^0.8.4"
+  }
+}
